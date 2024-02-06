@@ -7,7 +7,8 @@ import Base: iterate, show, push!, pop!, popat!, pushfirst!, popfirst!,
 
 export ForwardList, List, ForwardNode, ListNode, AbstractLinkedList, AbstractListNode, AbstractConsNode,
     iterate, show, push!, popat!, pushfirst!, popfirst!,
-    isempty, length, first, last, replace!, filter, keys, eltype
+    isempty, length, first, last, replace!, filter, keys, eltype,
+    insertNext!, removeNext!, dataof
     
 include("nodes.jl")
 include("exceptioins.jl")

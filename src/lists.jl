@@ -52,7 +52,8 @@ function pushfirst!(list::List, data::T) where T
     unlink::Union{Nothing, ListNode} = next(dummy(list))
 
     if !isnothing(unlink)
-        insertNext!(newnode, unlink)
+        newnode.next = unlink
+        unlink.prev = newnode
     else
         newnode.next = nothing
         newnode.prev = dummy(list)
@@ -100,6 +101,10 @@ function popat!(list::L, position::T) where {L <: AbstractLinkedList, T <: Abstr
     prevnode = prev(position, dummy(list))
     removeNext!(prevnode)
 
+    if position == list.current
+        list.current = prev(list.current, dummy(list))
+    end
+    
     if isempty(list)
         list.current = dummy(list)
     end
@@ -177,7 +182,7 @@ function filter(pred::Function, list::ForwardList{T})::ForwardList{T} where T
 
     for value in list
         if pred(value)
-            push!(result)
+            push!(result, value)
         end
     end
 
@@ -189,7 +194,7 @@ function filter(pred::Function, list::List{T})::List{T} where T
 
     for value in list
         if pred(value)
-            push!(result)
+            push!(result, value)
         end
     end
 

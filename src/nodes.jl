@@ -35,6 +35,11 @@ function prev(node::ForwardNode, start::DummyNode)::Union{DummyNode, ForwardNode
     return prev
 end
 
+
+#=
+ATTENTION: 使用这个 insertNext! 的时候，前面的参数 node 必须是链表里的结点，如果是新结点的话，会出现错误
+nextnode 必须是新结点
+=#
 function insertNext!(node::DummyNode, nextnode::ForwardNode)
     nextOfDummy = node.next
     node.next = nextnode
@@ -82,7 +87,9 @@ function removeNext!(node::AbstractListNode)
     unlinkNode::Union{Nothing, AbstractListNode} = next(targetNode)
 
     if !isnothing(unlinkNode)
-        insertNext!(node, unlinkNode)
+        # insertNext!(node, unlinkNode)
+        node.next = unlinkNode
+        unlinkNode.prev = node
     else 
         node.next = unlinkNode
     end
