@@ -1,0 +1,4 @@
+name = "LinkedList"
+uuid = "3e022a7e-7250-4727-bf30-41362114d8c7"
+authors = ["steiner <steiner3044@163.com>"]
+version = "0.1.0"
