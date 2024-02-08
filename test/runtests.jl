@@ -1,4 +1,4 @@
-using LinkedList
+#= using DataStructure.LinkedList
 
 let list = List(Int)
 
@@ -23,4 +23,17 @@ let list = List(Int)
     
 end
 
-# test: pop at current
+# test: pop at current =#
+
+using DataStructure.BinaryTree
+using DataStructure.LinkedList
+
+let tree = BinarySearchTree(Int, -)
+    for i in 1:10
+        insert!(tree, i)
+    end
+
+    queue = List(AbstractBinaryTreeNode)
+    root = tree.root
+    push!(queue, root.right)
+end

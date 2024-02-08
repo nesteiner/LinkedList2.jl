@@ -1,23 +1,29 @@
 abstract type AbstractListNode end
 abstract type AbstractConsNode{T} <: AbstractListNode end
 
+struct NilNode <: AbstractListNode end
+
+nil = NilNode()
+
 mutable struct DummyNode{T} <: AbstractListNode
-    next::Union{Nothing, AbstractConsNode{T}}
+    next::Union{NilNode, AbstractConsNode{T}}
 end
 
 mutable struct ForwardNode{T} <: AbstractConsNode{T}
     data::T
-    next::Union{Nothing, ForwardNode{T}}
+    next::Union{NilNode, ForwardNode{T}}
 end
 
 mutable struct ListNode{T} <: AbstractConsNode{T}
     data::T
-    next::Union{Nothing, ListNode{T}}
-    prev::Union{Nothing, DummyNode{T}, ListNode{T}}
+    next::Union{NilNode, ListNode{T}}
+    prev::Union{NilNode, DummyNode{T}, ListNode{T}}
 end
 
-ForwardNode(data::T) where T = ForwardNode{T}(data, nothing)
-ListNode(data::T) where T = ListNode{T}(data, nothing, nothing)
+convert(::Type{AbstractConsNode{T}}, node::E) where {T, E <: AbstractConsNode} = node
+
+ForwardNode(data::T) where T = ForwardNode{T}(data, nil)
+ListNode(data::T) where T = ListNode{T}(data, nil, nil)
 
 next(node::AbstractListNode) = node.next
 dataof(node::AbstractConsNode) = node.data
@@ -52,22 +58,22 @@ function insertNext!(node::DummyNode, nextnode::ListNode)
     nextnode.next = nextOfDummy
     nextnode.prev = node
 
-    if !isnothing(nextOfDummy)
+    if nextOfDummy !== nil
         nextOfDummy.prev = nextnode
     end
 end
 
 function insertNext!(node::ForwardNode, nextnode::ForwardNode) 
-    nextOfNode::Union{Nothing, ForwardNode} = node.next
+    nextOfNode::Union{NilNode, ForwardNode} = node.next
 
     nextnode.next = nextOfNode
     node.next = nextnode
 end
 
 function insertNext!(node::ListNode, nextnode::ListNode)
-    nextOfDummy::Union{Nothing, ListNode} = node.next
+    nextOfDummy::Union{NilNode, ListNode} = node.next
 
-    if !isnothing(nextOfDummy)
+    if nextOfDummy !== nil
         nextOfDummy.prev = nextnode
     end
 
@@ -84,20 +90,25 @@ function removeNext!(node::AbstractListNode)
         throw(BadOperationException("there is no more nodes to remove"))
     end
 
-    unlinkNode::Union{Nothing, AbstractListNode} = next(targetNode)
+    unlinkNode::AbstractListNode = next(targetNode)
 
-    if !isnothing(unlinkNode)
+    if unlinkNode !== nil
         # insertNext!(node, unlinkNode)
         node.next = unlinkNode
-        unlinkNode.prev = node
+
+        if isa(unlinkNode, ListNode)
+            unlinkNode.prev = node
+        end
     else 
         node.next = unlinkNode
     end
 end
 
-iterate(node::AbstractListNode) = node, next(node)
+iterate(::NilNode) = nothing
+iterate(node::AbstractConsNode) = node, next(node)
 iterate(::AbstractConsNode, nextnode::AbstractConsNode) = nextnode, next(nextnode)
 
+show(io, ::NilNode) = print(io, "nil")
 show(io::IO, ::DummyNode) = print(io, "dummy ->")
 show(io::IO, node::AbstractConsNode) = print(io, "$(dataof(node)) ->")
 

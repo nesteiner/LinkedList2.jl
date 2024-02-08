@@ -8,7 +8,7 @@ mutable struct ForwardList{T} <: AbstractLinkedList
 end
 
 function ForwardList(::Type{T}) where T
-    dummy = DummyNode{T}(nothing)
+    dummy = DummyNode{T}(nil)
 
     return ForwardList{T}(dummy, dummy, 0, (data::T) -> ForwardNode(data))
 end
@@ -21,7 +21,7 @@ mutable struct List{T} <: AbstractLinkedList
 end
 
 function List(::Type{T}) where T
-    dummy = DummyNode{T}(nothing)
+    dummy = DummyNode{T}(nil)
     return List{T}(dummy, dummy, 0, (data::T) -> ListNode(data))
 end
 
@@ -32,9 +32,9 @@ length(list::AbstractLinkedList) = list.length
 keys(list::AbstractLinkedList) = next(dummy(list))
 isempty(list::AbstractLinkedList) = length(list) == 0
 
-nodeConstructor(list::AbstractLinkedList) = list.nodeConstructor
+nodeConstructor(list::T) where T <: AbstractLinkedList = list.nodeConstructor
 
-function push!(list::AbstractLinkedList, data::T) where T
+function push!(list::T, data::E) where {T <: AbstractLinkedList, E}
     list.length += 1
     newnode = nodeConstructor(list)(data)
 
@@ -43,19 +43,23 @@ function push!(list::AbstractLinkedList, data::T) where T
 end
 
 function pushfirst!(list::ForwardList, data::T) where T
-    # TODO
+    list.length += 1
+    newnode::ForwardNode = nodeConstructor(list)(data)
+    unlink::Union{NilNode, ForwardNode} = next(dummy(list))
+    newnode.next = unlink
+    insertNext!(dummy(list), newnode)
 end
 
 function pushfirst!(list::List, data::T) where T
     list.length += 1
     newnode::ListNode = nodeConstructor(list)(data)
-    unlink::Union{Nothing, ListNode} = next(dummy(list))
+    unlink::Union{NilNode, ListNode} = next(dummy(list))
 
-    if !isnothing(unlink)
+    if unlink !== nil
         newnode.next = unlink
         unlink.prev = newnode
     else
-        newnode.next = nothing
+        newnode.next = nil
         newnode.prev = dummy(list)
         list.current = newnode
     end
@@ -121,16 +125,16 @@ function pushnext!(list::L, position::E, data::T) where {L <: AbstractLinkedList
 end
 
 function iterate(list::T) where T <: AbstractLinkedList
-    firstNode = next(dummy(list))
-    return if isnothing(firstNode)
-        firstNode
+    firstNode::Union{NilNode, AbstractConsNode} = next(dummy(list))
+    return if firstNode === nil
+        nothing
     else
         dataof(firstNode), next(firstNode)
     end
 end
 
-function iterate(::T, state::E) where {T <: AbstractLinkedList, E <: Union{AbstractConsNode, Nothing}}
-    return if isnothing(state)
+function iterate(::T, state::E) where {T <: AbstractLinkedList, E <: AbstractListNode}
+    return if state === nil
         nothing
     else
         dataof(state), next(state)
@@ -142,7 +146,7 @@ replace!(node::Union{ForwardNode{T}, ListNode{T}}, data::T) where T = node.data 
 function first(list::AbstractLinkedList)
     firstnode = next(dummy(list))
 
-    if isnothing(firstnode)
+    if firstnode === nil
         throw(BadOperationException("there is no elements in the list"))
     end
 
@@ -152,7 +156,7 @@ end
 function last(list::AbstractLinkedList)
     lastnode = current(list)
 
-    if isnothing(lastnode)
+    if lastnode === nil
         throw(BadOperationException("there is no elements in the list"))
     end
 
