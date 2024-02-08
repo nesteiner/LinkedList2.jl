@@ -3,7 +3,7 @@ import Base:(==), iterate, eltype, show, insert!,
     keys, contains, length, popat!, replace!, filter, haskey,
     convert
 
-export BinarySearchTree, search, AbstractBinaryTreeNode, AbstractBinaryTree
+export BinarySearchTree, search, AbstractBinaryTreeNode, AbstractBinaryTree, BinaryTreeNode, AVLTreeNode
 using DataStructure.LinkedList
 
 abstract type AbstractBinaryTree end

@@ -33,7 +33,8 @@ let tree = BinarySearchTree(Int, -)
         insert!(tree, i)
     end
 
-    queue = List(AbstractBinaryTreeNode)
+    println(tree)
+    #= queue = List(AbstractBinaryTreeNode)
     root = tree.root
-    push!(queue, root.right)
+    push!(queue, root.right) =#
 end

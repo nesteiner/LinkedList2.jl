@@ -1,28 +1,28 @@
 abstract type AbstractLinkedList end
 
 mutable struct ForwardList{T} <: AbstractLinkedList
-    dummy::DummyNode{T}
-    current::Union{DummyNode{T}, ForwardNode{T}}
+    dummy::ForwardDummyNode{T}
+    current::Union{ForwardDummyNode{T}, ForwardNode{T}}
     length::Int
     nodeConstructor::Function
 end
 
 function ForwardList(::Type{T}) where T
-    dummy = DummyNode{T}(nil)
+    dummy = ForwardDummyNode{T}(nil)
 
-    return ForwardList{T}(dummy, dummy, 0, (data::T) -> ForwardNode(data))
+    return ForwardList{T}(dummy, dummy, 0, (data::T) -> ForwardNode(data, nil))
 end
 
 mutable struct List{T} <: AbstractLinkedList
-    dummy::DummyNode{T}
-    current::Union{DummyNode{T}, ListNode{T}}
+    dummy::ListDummyNode{T}
+    current::Union{ListDummyNode{T}, ListNode{T}}
     length::Int
     nodeConstructor::Function
 end
 
 function List(::Type{T}) where T
-    dummy = DummyNode{T}(nil)
-    return List{T}(dummy, dummy, 0, (data::T) -> ListNode(data))
+    dummy = ListDummyNode{T}(nil)
+    return List{T}(dummy, dummy, 0, (data::T) -> ListNode(data, nil, dummy))
 end
 
 dummy(list::AbstractLinkedList) = list.dummy
@@ -46,7 +46,8 @@ function pushfirst!(list::ForwardList, data::T) where T
     list.length += 1
     newnode::ForwardNode = nodeConstructor(list)(data)
     unlink::Union{NilNode, ForwardNode} = next(dummy(list))
-    newnode.next = unlink
+    # newnode.next = unlink
+    insertNext!(newnode, unlink)
     insertNext!(dummy(list), newnode)
 end
 
@@ -55,15 +56,16 @@ function pushfirst!(list::List, data::T) where T
     newnode::ListNode = nodeConstructor(list)(data)
     unlink::Union{NilNode, ListNode} = next(dummy(list))
 
-    if unlink !== nil
+    #= if unlink !== nil
         newnode.next = unlink
         unlink.prev = newnode
     else
         newnode.next = nil
         newnode.prev = dummy(list)
         list.current = newnode
-    end
+    end =#
 
+    insertNext!(newnode, unlink)
     insertNext!(dummy(list), newnode)
 end
 
@@ -99,13 +101,13 @@ function popfirst!(list::T) where T <: AbstractLinkedList
     return dataof(target)
 end
 
-function popat!(list::L, position::T) where {L <: AbstractLinkedList, T <: AbstractConsNode}
+function popat!(list::L, position::T) where {L <: AbstractLinkedList, T <: AbstractListConsNode}
     list.length -= 1
 
     prevnode = prev(position, dummy(list))
     removeNext!(prevnode)
 
-    if position == list.current
+    if position === list.current
         list.current = prev(list.current, dummy(list))
     end
     
@@ -116,7 +118,7 @@ function popat!(list::L, position::T) where {L <: AbstractLinkedList, T <: Abstr
     dataof(position)
 end
 
-function pushnext!(list::L, position::E, data::T) where {L <: AbstractLinkedList, E <: AbstractConsNode, T}
+function pushnext!(list::L, position::E, data::T) where {L <: AbstractLinkedList, E <: AbstractListConsNode, T}
     list.length += 1
     newnode = nodeConstructor(list)(data)
     unlink = next(position)
@@ -125,7 +127,7 @@ function pushnext!(list::L, position::E, data::T) where {L <: AbstractLinkedList
 end
 
 function iterate(list::T) where T <: AbstractLinkedList
-    firstNode::Union{NilNode, AbstractConsNode} = next(dummy(list))
+    firstNode::Union{NilNode, AbstractListConsNode} = next(dummy(list))
     return if firstNode === nil
         nothing
     else
