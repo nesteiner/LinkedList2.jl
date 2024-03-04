@@ -19,7 +19,7 @@ mutable struct AVLTreeNode{T} <: AbstractBinaryTreeConsNode{T}
 end
 
 BinaryTreeNode(data::T) where T = BinaryTreeNode{T}(data, treenil, treenil)
-AVLTreeNode(data::T) where T = AVLTreeNode{T}(data, treenil, treenil)
+AVLTreeNode(data::T) where T = AVLTreeNode{T}(data, treenil, treenil, 1)
 
 dataof(node::AbstractBinaryTreeConsNode) = node.data
 left(node::AbstractBinaryTreeConsNode) = node.left

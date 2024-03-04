@@ -3,14 +3,16 @@ import Base:(==), iterate, eltype, show, insert!,
     keys, contains, length, popat!, replace!, filter, haskey,
     convert
 
-export BinarySearchTree, search, AbstractBinaryTreeNode, AbstractBinaryTree, BinaryTreeNode, AVLTreeNode
+export BinarySearchTree, AVLTree, search, AbstractBinaryTreeNode, AbstractBinaryTree, BinaryTreeNode, AVLTreeNode
+export levelorder, preorder, inorder, postorder, dataof, left, right, isleaf, search, insert!, popat!
 using DataStructure.LinkedList
 
 abstract type AbstractBinaryTree end
 
 include("treenodes.jl")
 include("binarysearchtree.jl")
-
+include("avltree.jl")
+include("iterate.jl")
 eltype(::BinarySearchTree{T}) where T = T
 eltype(::Type{Base.Iterators.Filter{F, V}}) where {F, V} = eltype(V)
 
@@ -83,4 +85,13 @@ function search(value::T, tree::AbstractBinaryTree)::AbstractBinaryTreeNode wher
     end
 end
 
+function haskey(tree::AbstractBinaryTree, data::T)::Bool where T
+    tree.root === treenil && return false
+
+    node = search(data, tree)
+    return node === treenil
+end
+
+convert(::Type{BinaryTreeNode{T}}, node::BinaryTreeNode{E}) where {T, E <: T} = BinaryTreeNode{T}(node.data, node.left, node.right)
+convert(::Type{Union{BinaryTreeNil, BinaryTreeNode{T}}}, node::BinaryTreeNode{E}) where {T, E <: T} = BinaryTreeNode{T}(node.data, node.left, node.right)
 end
