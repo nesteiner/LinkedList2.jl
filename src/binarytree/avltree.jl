@@ -4,7 +4,7 @@ mutable struct AVLTree{T} <: AbstractBinaryTree
     compare::Function
 end
 
-AVLTree(T::DataType, compare::Function) = AVLTree{T}(treenil, 0, compare)
+AVLTree(::Type{T}, compare::Function) where T = AVLTree{T}(treenil, 0, compare)
 
 function insert!(tree::AVLTree{T}, data::T) where T
     tree.root = insertAVLNode!(tree.root, data, tree.compare)
@@ -18,6 +18,6 @@ function popat!(tree::AVLTree{T}, data::T)::T where T
 
         return data
     else
-        throw(BadOperation("there is no such element in the tree"))
+        throw(BadOperationException("there is no such element in the tree"))
     end
 end

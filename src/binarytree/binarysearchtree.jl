@@ -4,7 +4,7 @@ mutable struct BinarySearchTree{T} <: AbstractBinaryTree
     length::Int
 end
 
-BinarySearchTree(T::DataType, compare::Function) = BinarySearchTree{T}(treenil, compare, 0)
+BinarySearchTree(::Type{T}, compare::Function) where T = BinarySearchTree{T}(treenil, compare, 0)
 
 function insert!(tree::BinarySearchTree{T}, data::T) where T
     tree.root = insertNode!(tree.root, data, tree.compare)
@@ -13,7 +13,7 @@ end
 
 function popat!(tree::BinarySearchTree{T}, node::BinaryTreeNode{T}) where T
     if isempty(tree)
-        throw(BadOperation("cannot pop on a empty tree"))
+        throw(BadOperationException("cannot pop on a empty tree"))
     end
 
     parent = treenil
@@ -32,7 +32,7 @@ function popat!(tree::BinarySearchTree{T}, node::BinaryTreeNode{T}) where T
     end
 
     if current === treenil
-        throw(BadOperation("no such node in the tree"))
+        throw(BadOperationException("no such node in the tree"))
     end
 
     if left(current) === treenil

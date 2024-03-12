@@ -3,8 +3,10 @@ import Base:(==), iterate, eltype, show, insert!,
     keys, contains, length, popat!, replace!, filter, haskey,
     convert
 
+import DataStructure: BadOperationException    
+
 export BinarySearchTree, AVLTree, search, AbstractBinaryTreeNode, AbstractBinaryTree, BinaryTreeNode, AVLTreeNode
-export levelorder, preorder, inorder, postorder, dataof, left, right, isleaf, search, insert!, popat!
+export levelorder, preorder, inorder, postorder, dataof, left, right, isleaf, search, insert!, popat!, dataof
 using DataStructure.LinkedList
 
 abstract type AbstractBinaryTree end
@@ -94,4 +96,6 @@ end
 
 convert(::Type{BinaryTreeNode{T}}, node::BinaryTreeNode{E}) where {T, E <: T} = BinaryTreeNode{T}(node.data, node.left, node.right)
 convert(::Type{Union{BinaryTreeNil, BinaryTreeNode{T}}}, node::BinaryTreeNode{E}) where {T, E <: T} = BinaryTreeNode{T}(node.data, node.left, node.right)
+convert(::Type{AVLTreeNode{T}}, node::AVLTreeNode{E}) where {T, E <: T} = AVLTreeNode{T}(node.data, node.left, node.right, node.height)
+convert(::Type{Union{BinaryTreeNil, AVLTreeNode{T}}}, node::AVLTreeNode{E}) where {T, E <: T} = AVLTreeNode{T}(node.data, node.left, node.right, node.height)
 end
