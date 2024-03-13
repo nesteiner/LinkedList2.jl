@@ -133,8 +133,6 @@ function prim(graph::AbstractGraph{T}, start::Union{T, Nothing} = nothing) where
                 end
             end
 
-            #= insertEdge!(result, adjList.vertex, minVertex, minWeight)
-            visited[adjList.vertex] = true =#
         end
 
         insertEdge!(result, parents[minVertex], minVertex, minWeight)

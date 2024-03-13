@@ -196,7 +196,7 @@ function filter(pred::Function, list::ForwardList{T})::ForwardList{T} where T
 end
 
 function filter(pred::Function, list::List{T})::List{T} where T
-    result = ForwardList(T)
+    result = List(T)
 
     for value in list
         if pred(value)

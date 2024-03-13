@@ -215,3 +215,29 @@ let graph = UnDirectedGraph(Char)
     println(kruskal(graph))
     println(prim(graph))
 end
+
+let graph = UnDirectedGraph(Char)
+    for i in 'A':'G'
+        insertVertex!(graph, i)
+    end
+
+    insertEdge!(graph, 'A', 'B', 7)
+    insertEdge!(graph, 'A', 'D', 5)
+    insertEdge!(graph, 'B', 'D', 9)
+    insertEdge!(graph, 'B', 'C', 8)
+    insertEdge!(graph, 'B', 'E', 7)
+    insertEdge!(graph, 'C', 'E', 5)
+    insertEdge!(graph, 'D', 'E', 15)
+    insertEdge!(graph, 'D', 'F', 6)
+    insertEdge!(graph, 'E', 'F', 8)
+    insertEdge!(graph, 'E', 'G', 9)
+    insertEdge!(graph, 'F', 'G', 11)
+
+    shortestPath = DijkstraShortestPath(graph, 'A')
+    println(shortestPath.distancesMap)
+    println(shortestPath.parents)
+    println(shortestPath.visited)
+
+    shortestPath = FolydShortestPath(graph, 'A')
+    println(shortestPath.distanceMap['A'])
+end

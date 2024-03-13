@@ -3,7 +3,8 @@ module Graph
 import Base:show, iterate, keys, copy
 using DataStructure:BadOperationException
 export DirectedGraph, UnDirectedGraph, vertexCount, edgeCount, insertVertex!, insertEdge!, Edge,
-    removeVertex!, removeEdge!, replaceWeight!, bfsIterate, dfsIterate, hasCycle, kruskal, prim, hasVertex, hasEdge
+    removeVertex!, removeEdge!, replaceWeight!, bfsIterate, dfsIterate, hasCycle, kruskal, prim, hasVertex, hasEdge,
+    DijkstraShortestPath, FolydShortestPath
 
 using DataStructure.LinkedList, DataStructure.Heap
 
@@ -304,5 +305,7 @@ function hasEdge(graph::AbstractGraph{T}, vertex::T, otherVertex::T) where T
     
     return !isnothing(findfirst(edge -> edge.vertex == otherVertex, dataof(nodeLeft).edges))
 end
+
+include("shortest_path.jl")
 
 end
