@@ -1,0 +1,409 @@
+#+title: 数据结构与算法
+
+* Graph
+** 遍历
+#+begin_src julia-ts
+  mutable struct BFSIterator{T}
+      graph::AbstractGraph{T}
+      start::Union{AdjList{T}, Nothing}
+  end
+
+  mutable struct DFSIterator{T}
+      graph::AbstractGraph{T}
+      start::Union{AdjList{T}, Nothing}
+  end
+
+  # 这里 nothing 表示默认将开始结点设置为领结表的第一个元素中的结点
+  BFSIterator(graph::AbstractGraph{T}, start::Union{AdjList{T}, Nothing}) where T = BFSIterator(graph, start)
+
+  DFSIterator(graph::AbstractGraph{T}, start::Union{AdjList{T}, Nothing}) where T = DFSIterator(graph, start)
+
+  @enum Color begin
+      White
+      Grey
+      Black
+  end
+
+  mutable struct BFSState{T}
+      queue::List{T}
+      visited::Dict{T, Color}
+  end
+
+  mutable struct DFSState{T}
+      stack::List{T}
+      visited::Dict{T, Color}
+  end
+#+end_src
+
+*** 广度优先遍历
+1. 首先创建一个 =Dict{VertexType, Color}= 映射集，并将所有结点的颜色设置为百色，表示未对其进行访问
+2. 创建一个队列 =queue= 来存放结点
+3. 选取一个开始结点 =startVertex=
+4. 提前将 =startVertex= 的颜色改为黑色，表示已经访问了该结点，并将其边结点放入了队列中
+5. 遍历 =startVertex= 的边结点，将他们插入到 =queue= 中
+6. 从 =queue= 中提取出一个元素作为开始结点 =vertex=
+7. 若这个 =vertex= 结点的颜色不是黑色，那么遍历其边结点
+   - 如果边结点的颜色是白色，那么将边结点插入到 =queue= 中
+   - 并将其颜色设置为灰色，表示虽然访问过该结点，但是还没访问过其边结点
+
+
+#+begin_src julia-ts
+  function iterate(iterator::BFSIterator{T}) where T
+      state = BFSState{T}(List(T), Dict{T, Color}())
+
+      if vertexCount(iterator.graph) == 0
+          return nothing
+      end
+
+      for adjList in iterator.graph.adjLists
+          vertex = adjList.vertex
+          state.visited[vertex] = White
+      end
+
+      firstVertex = if isnothing(iterator.start)
+          first(iterator.graph.adjLists).vertex
+      else
+          iterator.start.vertex
+      end
+
+      state.visited[firstVertex] = Black
+      edges = findEdges(iterator.graph, firstVertex)
+
+      for edge in edges
+          push!(state.queue, edge.vertex)
+          state.visited[edge.vertex] = Grey
+      end
+
+      return firstVertex, state
+  end
+
+  function iterate(iterator::BFSIterator{T}, state::BFSState{T}) where T
+      isempty(state.queue) && return nothing
+
+      vertex = popfirst!(state.queue)
+
+      if state.visited[vertex] != Black
+          edges = findEdges(iterator.graph, vertex)
+
+          for edge in edges
+              if state.visited[edge.vertex] == White
+                  push!(state.queue, edge.vertex)
+                  state.visited[edge.vertex] = Grey
+              end
+          end
+
+          state.visited[vertex] = Black
+      end
+
+      return vertex, state
+  end
+#+end_src
+*** 深度优先遍历
+1. 创建一个 =Dict{VertexType, Color}= 映射集，并将所有结点的颜色设置为白色，
+2. 创建一个栈 =stack= 来存放结点
+3. 选取一个开始结点 =startVertex=
+4. 提前将 =startVertex= 的颜色改为黑色，表示已访问了该结点，并将其边结点放入了栈中
+5. 遍历 =startVertex= 的边结点，将其颜色改为灰色，表示已访问该结点，但是还没有访问其边结点
+6. 从 =stack= 中提取一个元素作为开始结点 =vertex=
+7. 遍历 =vertex= 的边结点，如果边结点的颜色为白色，那么插入边结点到 =stack= 中，并将其颜色设置为灰色
+
+#+begin_src julia-ts
+  function iterate(iterator::DFSIterator{T}) where T
+      state = DFSState{T}(List(T), Dict{T, Color}())
+
+      if vertexCount(iterator.graph) == 0
+          return nothing
+      end
+
+      firstVertex = if isnothing(iterator.start)
+          first(iterator.graph.adjLists).vertex
+      else
+          iterator.start.vertex
+      end
+
+      for adjList in iterator.graph.adjLists
+          vertex = adjList.vertex
+          state.visited[vertex] = White
+      end
+
+      state.visited[firstVertex] = Black
+
+      for edge in findEdges(iterator.graph, firstVertex)
+          push!(state.stack, edge.vertex)
+          state.visited[edge.vertex] = Grey
+      end
+
+      return firstVertex, state
+  end
+
+  function iterate(iterator::DFSIterator{T}, state::DFSState{T}) where T
+      isempty(state.stack) && return nothing
+
+      vertex = pop!(state.stack)
+
+      for edge in findEdges(iterator.graph, vertex)
+          if state.visited[edge.vertex] == White
+              push!(state.stack, edge.vertex)
+              state.visited[edge.vertex] = Grey
+          end
+      end
+
+      return vertex, state
+  end
+#+end_src
+
+这里可以不用颜色来表示每个点的状态，用 =Dict{VertexType, Bool}= 也行的
+** 最小生成树
+*** kruskal 算法
+=kruskal= 算法关注的是边，在我的算法实现里他首先定义了一个结构体来记录边的信息
+#+begin_src julia-ts
+  @kwdef struct RecordItem{T}
+      start::T
+      endat::T
+      weight::Number    
+  end
+#+end_src
+
+这个算法的思路是
+1. 遍历整个图 =graph= ，将所有边的信息汇集到一个数组 =record= 中
+2. 将这个数组以结构体中 =weight= 为关键字进行排序
+3. 创建一个空图 =result= 作为结果，将所有点插入到 =result= 中
+4. 在一个循环里对 =result= 插入边
+   - 首先我们要确认，当 =result.edgeCount= 为 =graph.vertexCount - 1= 时，生成树已经创建完成，此时该退出循环
+   - 如果插入边后图中有环，那么删除刚才插入的边
+
+#+begin_src julia-ts
+  function kruskal(graph::AbstractGraph{T}, start::Union{T, Nothing} = nothing) where T
+      startVertex = if isnothing(start)
+          if graph.vertexCount == 0
+              nothing
+          else
+              first(graph.adjLists).vertex
+          end
+      else
+          findfirst(adjList -> adjList.vertex == start, graph.adjLists)
+      end
+
+      if isnothing(startVertex)
+          throw(BadOperationException("cannot start from a non-exist vertex"))
+      end
+
+      record = RecordItem{T}[]
+      visited = Dict{T, Color}()
+
+      for adjList in graph.adjLists
+          visited[adjList.vertex] = White
+      end
+
+      for adjList in graph.adjLists
+          vertex = adjList.vertex
+
+          if visited[vertex] == Black
+              continue
+          end
+        
+          edges = adjList.edges
+
+          visited[vertex] = Grey
+
+          start = vertex
+        
+          for edge in edges
+              endat = edge.vertex
+              visited[endat] = Grey
+
+              push!(record, RecordItem(start = start, endat = endat, weight = edge.weight))
+          end
+
+          visited[vertex] = Black
+      end
+
+      sort!(record, by = item -> item.weight)
+
+      result = if isa(graph, DirectedGraph)
+          DirectedGraph(T)
+      else
+          UnDirectedGraph(T)
+      end
+
+      for adjList in graph.adjLists
+          insertVertex!(result, adjList.vertex)
+      end
+
+      index = 1
+      len = length(record)
+
+      while result.edgeCount != graph.vertexCount - 1 && index <= len
+          item = record[index]
+
+          if !hasEdge(result, item.start, item.endat)
+              insertEdge!(result, item.start, item.endat, item.weight)
+          end
+
+          if hasCycle(result)
+              removeEdge!(result, item.start, item.endat)
+          end
+
+          index += 1
+      end
+
+      return result
+  end
+
+#+end_src     
+*** prim 算法
+=prim= 的核心是，将点集分为两个集合，在两个集合中找出最短的相邻的边，将边插入
+1. prim 算法在我的实现中需要两个辅助映射集
+   - =visisted::Dict{T, Bool}= 表示结点是否访问过，将其看做划分点集的记录
+   - =parents::Dict{T, Union{T, Nothing}}= 表示结点的父结点，如果是 =nothing= 则表示没有父结点
+2. 创建一个空图 =result= ，用来作为结果返回
+3. 遍历函数参数 =graph= ，我们只使用邻接表中的点
+   - =visited[adjList.vertex] = false=
+   - =parents[adjList.vertex] = nothing=
+   - 将点插入到 =result= 中
+4. 选取一个起始点 =startVertex= ，将 =startVertex= 划分为已访问过的点集
+5. 在一个循环中
+   - 直到所有结点已被访问才退出循环
+   - 在所有未访问的点集和已访问的点集中寻找最小的权重边和对应的两个点，并设置对应的父子关系
+   - 插入父结点和子结点对应的边，权重为最小权重边
+   - 设置父结点已被访问过
+
+#+begin_src julia-ts
+  function prim(graph::AbstractGraph{T}, start::Union{T, Nothing} = nothing) where T
+      startVertex = if isnothing(start)
+          if graph.vertexCount == 0
+              nothing
+          else
+              first(graph.adjLists).vertex
+          end
+      else
+          findfirst(adjList -> adjList.vertex == start, graph.adjLists)
+      end
+
+      if isnothing(startVertex)
+          throw(BadOperationException("cannot start from a non-exist vertex"))
+      end
+
+      result::AbstractGraph{T} = if isa(graph, UnDirectedGraph) 
+          UnDirectedGraph(T)
+      else
+          DirectedGraph(T)
+      end
+
+      # 标记点集，被标记的相当于加入了点集中    
+      visited = Dict{T, Bool}()
+      parents = Dict{T, Union{T, Nothing}}()
+      for adjList in graph.adjLists
+          visited[adjList.vertex] = false
+          parents[adjList.vertex] = nothing
+          insertVertex!(result, adjList.vertex)
+      end
+
+      visited[startVertex] = true
+    
+      while !all(values(visited))
+          minVertex, minWeight = nothing, Inf
+          # 所有未访问过的点集
+          for adjList in graph.adjLists
+              if visited[adjList.vertex]
+                  continue
+              end
+
+              for edge in adjList.edges
+                  # 未访问过的点集和已访问过的点集之间的边
+                  if visited[edge.vertex]
+                      if minWeight > edge.weight
+                          # minVertex, minWeight = edge.vertex, edge.weight
+                          minVertex = edge.vertex
+                          minWeight = edge.weight
+                          parents[edge.vertex] = adjList.vertex
+                      end
+                  end
+              end
+
+          end
+
+          insertEdge!(result, parents[minVertex], minVertex, minWeight)
+          visited[parents[minVertex]] = true
+      end
+
+      return result
+  end
+#+end_src
+
+** 最短路径
+*** Dijkstra 算法
+给定一个图 =graph= 一个起始点，可以得出这个点到每个点的距离，并附带每个结点的父结点
+1. 首先进行初始化
+   - 给定一个记录起始点到其他结点的权重 =distanceMap=
+   - 给定一个记录父结点的映射集 =parents=
+   - 给定一个记录每个结点访问记录的 =visited=
+   - 将每个结点的 =distance= 设置为 =Inf=
+   - 将每个结点的 =parent= 设置为 =nothing=
+   - 将每个结点的 =visited= 设置为 =false=
+
+2. 给定一个起始结点，将到其的权重设置为 0
+
+3. 在一个循环中
+   - 当所有结点已被访问时，退出循环
+   - 提取其结点未被访问过的邻接表，找出其中的点在 =distanceMap= 中最小的邻接表 =minAdjList=
+   - 遍历 =minAdjList= 的边，比较
+     1. 到这个边的距离 *A*
+     2. 到最小点(最小邻接表)的距离 + 边的权重 *B*
+     3. 如果 *A* > *B* ，那么将到边结点的距离设置为 *B* ，并将边结点的 =parent= 设置为最小结点 
+
+   - 将最小点设置为已访问过        
+
+   
+#+begin_src julia-ts
+  mutable struct DijkstraShortestPath{T}
+      graph::AbstractGraph{T}
+      start::T
+      distancesMap::Dict{T, Number}
+      parents::Dict{T, Union{T, Nothing}}
+      visited::Dict{T, Bool}
+  end
+
+
+  function DijkstraShortestPath(graph::AbstractGraph{T}, start::T) where T
+      result = DijkstraShortestPath(graph, start, Dict{T, Number}(), Dict{T, Union{T, Nothing}}(), Dict{T, Bool}())
+
+      distancesMap = result.distancesMap
+      parents = result.parents
+      graph = result.graph
+      visited = result.visited
+
+      for adjList in graph.adjLists
+          distancesMap[adjList.vertex] = Inf
+          parents[adjList.vertex] = nothing
+          visited[adjList.vertex] = false
+      end
+
+      distancesMap[start] = 0
+
+      while !all(values(visited))
+          minAdjList = reduce(
+              (left, right) -> distancesMap[left.vertex] < distancesMap[right.vertex] ? left : right,
+              filter(adjList -> !visited[adjList.vertex], graph.adjLists)
+          )
+
+          minVertex = minAdjList.vertex
+          edges = minAdjList.edges
+          # visited[minVertex] = true
+
+          for edge in edges
+              value = distancesMap[minVertex] + edge.weight
+              if distancesMap[edge.vertex] > value
+                  distancesMap[edge.vertex] = value
+                  parents[edge.vertex] = minVertex
+              end
+          end
+
+          visited[minVertex] = true
+        
+      end
+
+      return result
+  end
+#+end_src        
+        

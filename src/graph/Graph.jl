@@ -2,9 +2,10 @@ module Graph
 
 import Base:show, iterate, keys, copy
 using DataStructure:BadOperationException
+import DataStructure.LinkedList:nil
 export DirectedGraph, UnDirectedGraph, vertexCount, edgeCount, insertVertex!, insertEdge!, Edge,
     removeVertex!, removeEdge!, replaceWeight!, bfsIterate, dfsIterate, hasCycle, kruskal, prim, hasVertex, hasEdge,
-    DijkstraShortestPath, FolydShortestPath
+    DijkstraShortestPath, FolydShortestPath, indegree, topologicalSort
 
 using DataStructure.LinkedList, DataStructure.Heap
 
@@ -217,11 +218,48 @@ function replaceWeight!(graph::UnDirectedGraph{T}, vertex::T, otherVertex::T, we
     dataof(node).weight = weight
 end
 
-function isCyclicUntil(graph::AbstractGraph{T}; start::T, visited::Dict{T, Bool}, parent::Union{T, Nothing}) where T
+function isCyclicUntil(graph::DirectedGraph{T}, start::T, visited::Dict{T, Bool}, recursionStack::Dict{T, Bool}) where T
+    if !visited[start]
+        visited[start] = true
+        recursionStack[start] = true
+
+        for edge in findEdges(graph, start)
+            if !visited[edge.vertex] && isCyclicUntil(graph, edge.vertex, visited, recursionStack)
+                return true
+            elseif recursionStack[edge.vertex]
+                return true
+            end
+        end
+    end
+
+    recursionStack[start] = false
+    return false
+end
+
+function hasCycle(graph::DirectedGraph{T}) where T
+    visited = Dict{T, Bool}()
+    recursionStack = Dict{T, Bool}()
+
+    for adjList in graph.adjLists
+        visited[adjList.vertex] = false
+        recursionStack[adjList.vertex] = false
+    end
+
+    for adjList in graph.adjLists
+        if !visited[adjList.vertex] && isCyclicUntil(graph, adjList.vertex, visited, recursionStack)
+            return true
+        end
+    end 
+
+   return false
+end
+
+function isCyclicUntil(graph::UnDirectedGraph{T}, start::T, visited::Dict{T, Bool}, parent::Union{T, Nothing}) where T
     visited[start] = true
+
     for edge in findEdges(graph, start)
-        if !visited[edge.vertex] 
-            if isCyclicUntil(graph, start = edge.vertex, visited = visited, parent = start)
+        if !visited[edge.vertex]
+            if isCyclicUntil(graph, edge.vertex, visited, start)
                 return true
             end
         elseif edge.vertex != parent
@@ -232,18 +270,17 @@ function isCyclicUntil(graph::AbstractGraph{T}; start::T, visited::Dict{T, Bool}
     return false
 end
 
-function hasCycle(graph::AbstractGraph{T}) where T
+function hasCycle(graph::UnDirectedGraph{T}) where T
     visited = Dict{T, Bool}()
-
     for adjList in graph.adjLists
         visited[adjList.vertex] = false
     end
 
     for adjList in graph.adjLists
-        vertex = adjList.vertex
-
-        if !visited[vertex] && isCyclicUntil(graph, start = vertex, visited = visited, parent = nothing)
-            return true
+        if !visited[adjList.vertex]
+            if isCyclicUntil(graph, adjList.vertex, visited, nothing)
+                return true
+            end
         end
     end
 
@@ -306,6 +343,25 @@ function hasEdge(graph::AbstractGraph{T}, vertex::T, otherVertex::T) where T
     return !isnothing(findfirst(edge -> edge.vertex == otherVertex, dataof(nodeLeft).edges))
 end
 
-include("shortest_path.jl")
+function indegree(graph::DirectedGraph{T}, vertex::T) where T
+    node = findfirst(adjList -> adjList.vertex == vertex, graph.adjLists)
+    if isnothing(node)
+        throw(BadOperationException("find non-exist vertex"))
+    end
 
+    result = 0
+    for adjList in graph.adjLists
+        if adjList.vertex == vertex
+            continue
+        end
+
+        edges = adjList.edges
+        result += count(edge -> edge.vertex == vertex, edges)
+    end
+
+    return result
+end
+
+include("shortest_path.jl")
+include("topological.jl")
 end

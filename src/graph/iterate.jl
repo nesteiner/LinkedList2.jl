@@ -99,7 +99,7 @@ function iterate(iterator::DFSIterator{T}) where T
 
     for edge in findEdges(iterator.graph, firstVertex)
         push!(state.stack, edge.vertex)
-        state.visited[edge.vertex] = Black
+        state.visited[edge.vertex] = Grey
     end
 
     return firstVertex, state
@@ -113,7 +113,7 @@ function iterate(iterator::DFSIterator{T}, state::DFSState{T}) where T
     for edge in findEdges(iterator.graph, vertex)
         if state.visited[edge.vertex] == White
             push!(state.stack, edge.vertex)
-            state.visited[edge.vertex] = Black
+            state.visited[edge.vertex] = Grey
         end
     end
 

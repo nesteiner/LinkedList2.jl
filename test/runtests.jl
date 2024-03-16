@@ -241,3 +241,22 @@ let graph = UnDirectedGraph(Char)
     shortestPath = FolydShortestPath(graph, 'A')
     println(shortestPath.distanceMap['A'])
 end
+
+let graph = DirectedGraph(Int)
+    for i in 1:5
+        insertVertex!(graph, i)
+    end
+
+    insertEdge!(graph, 1, 2)
+    insertEdge!(graph, 1, 4)
+    insertEdge!(graph, 2, 3)
+    insertEdge!(graph, 2, 4)
+    insertEdge!(graph, 3, 5)
+    insertEdge!(graph, 4, 5)
+    insertEdge!(graph, 4, 3)
+    println(hasCycle(graph))
+
+    result = topologicalSort(graph)
+    println(result)
+    
+end

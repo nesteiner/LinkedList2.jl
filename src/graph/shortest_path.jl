@@ -36,14 +36,17 @@ function DijkstraShortestPath(graph::AbstractGraph{T}, start::T) where T
 
         minVertex = minAdjList.vertex
         edges = minAdjList.edges
-        visited[minVertex] = true
+        # visited[minVertex] = true
 
         for edge in edges
-            if distancesMap[edge.vertex] > distancesMap[minVertex] + edge.weight
-                distancesMap[edge.vertex] = distancesMap[minVertex] + edge.weight
+            value = distancesMap[minVertex] + edge.weight
+            if distancesMap[edge.vertex] > value
+                distancesMap[edge.vertex] = value
                 parents[edge.vertex] = minVertex
             end
         end
+
+        visited[minVertex] = true
         
     end
 
