@@ -80,18 +80,14 @@ function search(value::T, tree::AbstractBinaryTree)::AbstractBinaryTreeNode wher
         end
     end
 
-    return if current === treenil
-        treenil
-    else
-        current
-    end
+    return current
 end
 
 function haskey(tree::AbstractBinaryTree, data::T)::Bool where T
     tree.root === treenil && return false
 
     node = search(data, tree)
-    return node === treenil
+    return node !== treenil
 end
 
 convert(::Type{BinaryTreeNode{T}}, node::BinaryTreeNode{E}) where {T, E <: T} = BinaryTreeNode{T}(node.data, node.left, node.right)
