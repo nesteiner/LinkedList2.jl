@@ -21,10 +21,10 @@ struct PostOrderIterator{T} <: BinaryTreeIterator{T}
 end
 
 length(iterator::BinaryTreeIterator) = iterator.length
-levelorder(tree::AbstractBinaryTree) = LevelOrderIterator(tree.root, length(tree))
-preorder(tree::AbstractBinaryTree) = PreOrderIterator(tree.root, length(tree))
-postorder(tree::AbstractBinaryTree) = PostOrderIterator(tree.root, length(tree))
-inorder(tree::AbstractBinaryTree) = InOrderIterator(tree.root, length(tree))
+levelorder(tree::AbstractBinaryTree) = LevelOrderIterator(tree.root, size(tree))
+preorder(tree::AbstractBinaryTree) = PreOrderIterator(tree.root, size(tree))
+postorder(tree::AbstractBinaryTree) = PostOrderIterator(tree.root, size(tree))
+inorder(tree::AbstractBinaryTree) = InOrderIterator(tree.root, size(tree))
 
 function iterate(iterator::LevelOrderIterator{T}) where T
     node = iterator.node

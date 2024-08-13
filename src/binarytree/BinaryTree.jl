@@ -1,15 +1,16 @@
 module BinaryTree
 import Base:(==), iterate, eltype, show, insert!, 
-    keys, contains, length, popat!, replace!, filter, haskey,
+    keys, contains, length, popat!, replace!, filter, haskey, size,
     convert
 
 import DataStructure: BadOperationException    
 
 export BinarySearchTree, AVLTree, search, AbstractBinaryTreeNode, AbstractBinaryTree, BinaryTreeNode, AVLTreeNode
-export levelorder, preorder, inorder, postorder, dataof, left, right, isleaf, search, insert!, popat!, dataof
+export levelorder, preorder, inorder, postorder, dataof, left, right, isleaf, search, insert!, popat!, dataof, parentOf
 using DataStructure.LinkedList
 
 abstract type AbstractBinaryTree end
+abstract type AbstractBinarySearchTree <: AbstractBinaryTree end
 
 include("treenodes.jl")
 include("binarysearchtree.jl")
@@ -18,7 +19,7 @@ include("iterate.jl")
 eltype(::BinarySearchTree{T}) where T = T
 eltype(::Type{Base.Iterators.Filter{F, V}}) where {F, V} = eltype(V)
 
-length(tree::AbstractBinaryTree) = tree.length
+size(tree::AbstractBinaryTree) = tree.size
 
 function iterate(tree::AbstractBinaryTree)
     node = tree.root
@@ -94,4 +95,31 @@ convert(::Type{BinaryTreeNode{T}}, node::BinaryTreeNode{E}) where {T, E <: T} = 
 convert(::Type{Union{BinaryTreeNil, BinaryTreeNode{T}}}, node::BinaryTreeNode{E}) where {T, E <: T} = BinaryTreeNode{T}(node.data, node.left, node.right)
 convert(::Type{AVLTreeNode{T}}, node::AVLTreeNode{E}) where {T, E <: T} = AVLTreeNode{T}(node.data, node.left, node.right, node.height)
 convert(::Type{Union{BinaryTreeNil, AVLTreeNode{T}}}, node::AVLTreeNode{E}) where {T, E <: T} = AVLTreeNode{T}(node.data, node.left, node.right, node.height)
+
+function parentOf(target::AbstractBinaryTreeConsNode, tree::AbstractBinarySearchTree)::AbstractBinaryTreeNode
+    value = target.data
+    parent = tree.root
+    current = parent
+
+    while current !== treenil
+        result = tree.compare(value, dataof(current))
+        if result > 0
+            parent = current
+            current = right(current)
+        elseif result < 0
+            parent = current
+            current = left(current)
+        else
+            if current === target
+                return parent
+            else
+                parent = current
+                current = right(current)
+            end
+        end
+    end
+
+    return treenil
+end
+
 end
