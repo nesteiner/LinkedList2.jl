@@ -64,8 +64,10 @@ function iterate(iterator::PreOrderIterator{T}) where T
     node === treenil && return nothing
 
     stack = List(AbstractBinaryTreeNode)
-    push!(stack, node)
-    current = pop!(stack)
+    #= push!(stack, node)
+    current = pop!(stack) =#
+    
+    current = node
 
     if hasright(current)
         push!(stack, right(current))
@@ -99,8 +101,10 @@ function iterate(iterator::PostOrderIterator{T}) where T
     node === treenil && return nothing
 
     stack = List(AbstractBinaryTreeNode)
-    push!(stack, node)
-    current = pop!(stack)
+    #= push!(stack, node)
+    current = pop!(stack) =#
+    
+    current = node
 
     if hasleft(current)
         push!(stack, left(current))

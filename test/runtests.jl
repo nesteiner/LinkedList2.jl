@@ -154,7 +154,7 @@ let graph = DirectedGraph(Student)
     end
 end
  =#
-let graph = UnDirectedGraph(Int)
+#= let graph = DirectedGraph(Int)
     for i in 0:8
         insertVertex!(graph, i)
     end
@@ -176,8 +176,10 @@ let graph = UnDirectedGraph(Int)
     insertEdge!(graph, 5, 6, 7)
     insertEdge!(graph, 6, 7, 9)
 
-    println(kruskal(graph, nothing))
-    println(prim(graph))
+    #= println(kruskal(graph, nothing))
+    println(prim(graph)) =#
+    shortestPath = DijkstraShortestPath(graph, 0)
+    println(shortestPath.distancesMap)
 end
 
 let graph = UnDirectedGraph(Char)
@@ -259,4 +261,15 @@ let graph = DirectedGraph(Int)
     result = topologicalSort(graph)
     println(result)
     
+end =#
+
+using DataStructure.BalanceTree
+
+let tree = BTree(Int, 3)
+    for i in 1:10
+        insert!(tree, i)
+    end
+
+    println(tree)
+
 end
